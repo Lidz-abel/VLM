@@ -1,0 +1,13 @@
+torch
+torchvision
+torchaudio
+accelerate
+pillow
+gradio
+pymupdf
+faiss-cpu
+sentence-transformers
+qwen-vl-utils[decord]
+pyyaml
+tqdm
+git+https://github.com/huggingface/transformers

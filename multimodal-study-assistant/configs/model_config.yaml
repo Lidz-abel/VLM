@@ -1,0 +1,24 @@
+model:
+  name: "Qwen/Qwen2.5-VL-7B-Instruct"
+  torch_dtype: "auto"
+  device_map: "auto"
+
+generation:
+  max_new_tokens: 1024
+  do_sample: false
+  temperature: 0.0
+
+vision:
+  min_pixels: 200704
+  max_pixels: 1003520
+
+runtime:
+  batch_size: 1
+  use_cuda: true
+  share_gradio: false
+  server_name: "0.0.0.0"
+  server_port: 7860
+
+rag:
+  embedding_model: "BAAI/bge-small-zh-v1.5"
+  top_k: 4

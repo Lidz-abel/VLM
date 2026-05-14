@@ -1,0 +1,10 @@
+[
+  {
+    "id": "demo_001",
+    "image": "data/benchmark/demo_001.png",
+    "type": "exam_question",
+    "question": "请解答这道题，并说明核心知识点",
+    "reference_answer": "请替换为人工标注的参考答案。",
+    "key_concepts": ["示例概念"]
+  }
+]
