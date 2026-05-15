@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 import os
 import re
+import subprocess
 from pathlib import Path
 from typing import Any
 
@@ -112,3 +113,69 @@ def get_bool_env(name: str, default: bool = False) -> bool:
     if value is None:
         return default
     return value.lower() in {"1", "true", "yes", "y", "on"}
+
+
+def visible_cuda_devices() -> list[str]:
+    raw = os.getenv("CUDA_VISIBLE_DEVICES")
+    if raw is None or not raw.strip():
+        return []
+    return [item.strip() for item in raw.split(",") if item.strip()]
+
+
+def get_nvidia_smi_memory() -> list[dict[str, Any]]:
+    try:
+        output = subprocess.check_output(
+            [
+                "nvidia-smi",
+                "--query-gpu=index,name,memory.used,memory.free,utilization.gpu",
+                "--format=csv,noheader,nounits",
+            ],
+            text=True,
+            stderr=subprocess.DEVNULL,
+        )
+    except Exception:
+        return []
+
+    rows: list[dict[str, Any]] = []
+    for line in output.splitlines():
+        parts = [part.strip() for part in line.split(",")]
+        if len(parts) != 5:
+            continue
+        rows.append(
+            {
+                "index": int(parts[0]),
+                "name": parts[1],
+                "memory_used_mb": int(parts[2]),
+                "memory_free_mb": int(parts[3]),
+                "utilization_gpu": int(parts[4]),
+            }
+        )
+    return rows
+
+
+def assert_gpu_ready(min_free_gb: float = 18.0, require_single_visible: bool = True) -> str:
+    if get_bool_env("MOCK_VLM", False):
+        return "MOCK_VLM=1, skip GPU readiness check."
+
+    visible = visible_cuda_devices()
+    if require_single_visible and len(visible) != 1:
+        raise RuntimeError(
+            "为避免误用多卡，请先设置单卡可见，例如：CUDA_VISIBLE_DEVICES=0 bash scripts/run_demo.sh。"
+        )
+
+    gpu_rows = get_nvidia_smi_memory()
+    if not gpu_rows:
+        raise RuntimeError("无法读取 nvidia-smi，请确认 GPU 驱动可用。")
+
+    target_index = int(visible[0]) if visible and visible[0].isdigit() else gpu_rows[0]["index"]
+    row = next((item for item in gpu_rows if item["index"] == target_index), None)
+    if row is None:
+        raise RuntimeError(f"没有找到目标 GPU {target_index} 的 nvidia-smi 信息。")
+
+    free_gb = row["memory_free_mb"] / 1024
+    if free_gb < min_free_gb:
+        raise RuntimeError(
+            f"GPU {target_index} 空闲显存只有 {free_gb:.1f}GB，低于阈值 {min_free_gb:.1f}GB。"
+            "请等待任务结束、换一张空闲卡，或使用 MOCK_VLM=1 先跑无 GPU 流程。"
+        )
+    return f"GPU {target_index} ready: free={free_gb:.1f}GB"

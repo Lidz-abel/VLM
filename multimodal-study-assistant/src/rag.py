@@ -26,11 +26,12 @@ def record_to_document(record: dict[str, Any]) -> dict[str, Any]:
 
 
 class PdfRagIndex:
-    def __init__(self, embedding_model: str = "BAAI/bge-small-zh-v1.5") -> None:
+    def __init__(self, embedding_model: str = "BAAI/bge-small-zh-v1.5", device: str = "cpu") -> None:
         from sentence_transformers import SentenceTransformer
 
         self.embedding_model_name = embedding_model
-        self.encoder = SentenceTransformer(embedding_model)
+        self.device = device
+        self.encoder = SentenceTransformer(embedding_model, device=device)
         self.index: faiss.Index | None = None
         self.docs: list[dict[str, Any]] = []
 
@@ -59,6 +60,7 @@ class PdfRagIndex:
         write_json(
             {
                 "embedding_model": self.embedding_model_name,
+                "device": self.device,
                 "docs": self.docs,
             },
             output_dir / "docs.json",
@@ -68,7 +70,7 @@ class PdfRagIndex:
     def load(cls, index_dir: str | Path) -> "PdfRagIndex":
         index_dir = Path(index_dir)
         metadata = read_json(index_dir / "docs.json")
-        instance = cls(embedding_model=metadata["embedding_model"])
+        instance = cls(embedding_model=metadata["embedding_model"], device=metadata.get("device", "cpu"))
         instance.docs = metadata["docs"]
         instance.index = faiss.read_index(str(index_dir / "index.faiss"))
         return instance
@@ -98,9 +100,10 @@ def build_index_from_results(
     parsed_results_path: str | Path,
     output_dir: str | Path,
     embedding_model: str = "BAAI/bge-small-zh-v1.5",
+    device: str = "cpu",
 ) -> PdfRagIndex:
     records = read_json(parsed_results_path)
-    index = PdfRagIndex(embedding_model=embedding_model)
+    index = PdfRagIndex(embedding_model=embedding_model, device=device)
     index.build_from_records(records)
     index.save(output_dir)
     return index

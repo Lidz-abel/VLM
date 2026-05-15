@@ -13,6 +13,7 @@ data/pdfs/*
 data/parsed_pages/*
 data/vector_db/*
 outputs/*
+workspace/*
 eval/results/*
 
 !data/images/.gitkeep
@@ -20,6 +21,7 @@ eval/results/*
 !data/parsed_pages/.gitkeep
 !data/vector_db/.gitkeep
 !outputs/.gitkeep
+!workspace/.gitkeep
 !eval/results/.gitkeep
 
 *.log

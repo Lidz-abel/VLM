@@ -15,10 +15,13 @@ vision:
 runtime:
   batch_size: 1
   use_cuda: true
+  min_free_gb: 18.0
+  require_single_visible_gpu: true
   share_gradio: false
   server_name: "0.0.0.0"
   server_port: 7860
 
 rag:
   embedding_model: "BAAI/bge-small-zh-v1.5"
+  embedding_device: "cpu"
   top_k: 4

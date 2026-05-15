@@ -4,10 +4,13 @@ torchaudio
 accelerate
 pillow
 gradio
+fastapi
+uvicorn
 pymupdf
 faiss-cpu
 sentence-transformers
 qwen-vl-utils[decord]
 pyyaml
 tqdm
+pytest
 git+https://github.com/huggingface/transformers

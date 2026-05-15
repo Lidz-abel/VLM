@@ -5,7 +5,7 @@ from pathlib import Path
 from typing import Any
 
 from .prompts import build_image_prompt
-from .utils import PROJECT_ROOT, load_yaml
+from .utils import PROJECT_ROOT, assert_gpu_ready, get_bool_env, load_yaml, safe_stem
 
 
 @dataclass
@@ -34,6 +34,12 @@ class VLMInferencer:
     def load_model(self) -> None:
         if self.model is not None and self.processor is not None:
             return
+
+        runtime_cfg = self.config.get("runtime", {})
+        assert_gpu_ready(
+            min_free_gb=float(runtime_cfg.get("min_free_gb", 18.0)),
+            require_single_visible=bool(runtime_cfg.get("require_single_visible_gpu", True)),
+        )
 
         from transformers import AutoProcessor, Qwen2_5_VLForConditionalGeneration
 
@@ -134,11 +140,80 @@ class VLMInferencer:
         )[0].strip()
 
 
+class MockVLMInferencer(VLMInferencer):
+    """No-GPU inferencer for testing app, PDF, RAG, and note flows."""
+
+    def __init__(self, config_path: str | Path | None = None, model_name: str | None = None) -> None:
+        super().__init__(config_path=config_path, model_name=model_name or "mock-vlm")
+
+    def load_model(self) -> None:
+        self.model = "mock"
+        self.processor = "mock"
+
+    def answer_image(
+        self,
+        image_path: str | Path,
+        question: str | None = None,
+        structured: bool = True,
+        max_new_tokens: int | None = None,
+        prompt_override: str | None = None,
+    ) -> str:
+        image_name = safe_stem(image_path)
+        prompt_text = prompt_override or build_image_prompt(question, structured=structured)
+        if "【本页摘要】" in prompt_text:
+            return f"""【本页主题】
+Mock 页面解析：{image_name}
+
+【OCR 转写内容】
+这是 MOCK_VLM=1 生成的占位 OCR 文本，用于在没有空闲 GPU 时测试 PDF 渲染、逐页 JSON 保存、RAG 和笔记流程。
+
+【关键概念】
+- Mock 模式
+- PDF 页面解析
+- 无 GPU 流程验证
+
+【图表/公式/代码说明】
+无明显图表/公式/代码；真实结果需要在 GPU 空闲后使用 Qwen2.5-VL 重新解析。
+
+【本页摘要】
+本页是 {image_name} 的模拟解析结果。它不代表真实图片内容，只用于验证工程链路是否正常。
+"""
+        if not structured:
+            return f"这是 {image_name} 的 Mock 回答。真实图片内容需要 GPU 空闲后加载 Qwen2.5-VL 验证。"
+        return f"""【图片类型】
+other：Mock 模式无法判断真实图片类型。
+
+【识别内容】
+这是 MOCK_VLM=1 生成的占位识别内容，图片文件名为 {image_name}。
+
+【核心知识点】
+- Mock 模式
+- 单图问答链路
+- 结构化输出格式
+
+【分析过程】
+当前未加载真实 Qwen2.5-VL 模型，因此不分析图片视觉内容。该输出仅用于测试前端、Prompt 拼接、Markdown 渲染和后续流程。
+
+【最终答案】
+Mock 推理成功。等 GPU 空闲后关闭 MOCK_VLM，再用真实模型验证图片理解效果。
+"""
+
+    def answer_text(self, prompt: str, max_new_tokens: int | None = None) -> str:
+        return """这是 MOCK_VLM=1 生成的文本回答。
+
+当前回答只用于验证 RAG 问答链路、上下文拼接和页面引用展示。真实答案需要在 GPU 空闲后使用 Qwen2.5-VL 或文本模型重新生成。"""
+
+
 _DEFAULT_INFERENCER: VLMInferencer | None = None
 
 
 def get_default_inferencer(config_path: str | Path | None = None, model_name: str | None = None) -> VLMInferencer:
     global _DEFAULT_INFERENCER
+    if get_bool_env("MOCK_VLM", False):
+        if _DEFAULT_INFERENCER is None or not isinstance(_DEFAULT_INFERENCER, MockVLMInferencer):
+            _DEFAULT_INFERENCER = MockVLMInferencer(config_path=config_path, model_name=model_name)
+        return _DEFAULT_INFERENCER
+
     requested_name = model_name or None
     should_create = _DEFAULT_INFERENCER is None
     if _DEFAULT_INFERENCER is not None and requested_name and requested_name != _DEFAULT_INFERENCER.model_name:
