@@ -1,10 +1,26 @@
 [
   {
-    "id": "demo_001",
-    "image": "data/benchmark/demo_001.png",
+    "id": "os_scheduling_001",
+    "image": "data/images/1.png",
     "type": "exam_question",
-    "question": "请解答这道题，并说明核心知识点",
-    "reference_answer": "请替换为人工标注的参考答案。",
-    "key_concepts": ["示例概念"]
+    "question": "请解析这道操作系统作业调度与进程调度题，给出题目类型、关键数据、解题思路和最终答案。",
+    "reference_answer": "题目涉及短作业优先调度和基于优先级的抢占式进程调度。参考图中答案：Job1 9:00 进入主存、10:30 结束；Job2 9:10 进入主存、9:45 结束；Job4 9:45 进入主存、9:55 结束；Job3 9:55 进入主存、10:10 结束；平均周转时间为 43.75 分钟。常见算法包括时间片轮转、先来先服务、最高响应比等。进程调度算法关键在于预测进程行为；抢占式和非抢占式各有响应性与调度开销方面的取舍。",
+    "key_concepts": ["作业调度", "短作业优先", "抢占式优先级调度", "周转时间", "进程调度"]
+  },
+  {
+    "id": "os_banker_001",
+    "image": "data/images/2.png",
+    "type": "exam_question",
+    "question": "请解析这道银行家算法题，判断系统安全性，并分析 P1 和 P4 的资源请求是否可以满足。",
+    "reference_answer": "题目涉及银行家算法和安全序列判断。参考图中答案：系统当前安全，存在安全序列，例如 p2->p0->x->x->x、p2->p3->x->x->x、p3->p2->x->x->x 或 p3->p4->x->x->x，其中 x 可取剩余进程且不重复。P1 请求 (1,0,1,0) 不能满足，因为系统不存在安全序列。P4 请求 (1,1,1,1) 可以满足，存在安全序列 p3->p4->x->x->x。",
+    "key_concepts": ["银行家算法", "安全序列", "资源分配", "死锁避免", "Available", "Allocation", "Claim"]
+  },
+  {
+    "id": "os_process_thread_001",
+    "image": "data/images/3.png",
+    "type": "exam_question",
+    "question": "请解析这道 UNIX 进程与线程题，识别代码行为，并回答题目中的进程数、线程数、输出结果和同步问题。",
+    "reference_answer": "题目考查 fork、pthread_create、sleep、wait、进程与线程区别、共享变量 count 和临界区管理。参考图中答案包含：共 2 个进程、4 个线程；输出可能为 2:1、1:3、1:2、0:4；实际线程数口径可能因系统实现而不同。需要分析 count 的共享访问与并发执行次序。",
+    "key_concepts": ["fork", "pthread", "进程", "线程", "共享变量", "并发执行", "临界区"]
   }
 ]
