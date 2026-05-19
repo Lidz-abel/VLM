@@ -10,8 +10,20 @@
 
 ## 待记录
 
-- 模型加载显存占用：
-- 单图平均响应时间：
+- 模型加载显存占用：Qwen2.5-VL-7B-Instruct 在单张 RTX 4090 上测试时，推理期间 `allocated=15.45GB`，`reserved=17.86GB`，`nvidia-smi` 峰值约 `18.8GB`。
+- 单图平均响应时间：3 张操作系统考试题截图平均 `26.40s`。
 - PDF 解析速度：
 - Benchmark 样本数：
-- 图片类型识别准确率：
+- Benchmark 样本数：3
+- 图片类型识别准确率：100.00%（3/3，均识别为 `exam_question`）
+
+## 2026-05-19
+
+- 下载并缓存 `Qwen/Qwen2.5-VL-7B-Instruct`，缓存目录约 16GB。
+- 使用 GPU 0 完成 3 张真实图片 benchmark：
+  - `os_scheduling_001`：40.71s
+  - `os_banker_001`：18.95s
+  - `os_process_thread_001`：19.53s
+- 输出文件：
+  - `eval/results/qwen2_5_vl_7b_3_images.json`
+  - `eval/results/qwen2_5_vl_7b_3_images.manual_scores.csv`
